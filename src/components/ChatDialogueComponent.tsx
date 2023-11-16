@@ -1,17 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface ChatDialogProps {
   roomNumber: number;
 }
 
 const ChatDialogueComponent: React.FC<ChatDialogProps> = ({ roomNumber }) => {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [roomMessages, setRoomMessages] = useState<Record<number, string[]>>({});
   const [newMessage, setNewMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    if (!roomMessages[roomNumber]) {
+      setRoomMessages((prevMessages) => ({
+        ...prevMessages,
+        [roomNumber]: [],
+      }));
+    }
+
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [roomNumber, roomMessages]);
+
   const handleSendMessage = () => {
     if (newMessage.trim() !== '') {
-      setMessages([...messages, newMessage]);
+      setRoomMessages((prevMessages) => ({
+        ...prevMessages,
+        [roomNumber]: [...(prevMessages[roomNumber] || []), newMessage],
+      }));
       setNewMessage('');
     }
   };
@@ -23,17 +39,11 @@ const ChatDialogueComponent: React.FC<ChatDialogProps> = ({ roomNumber }) => {
     }
   };
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
   return (
     <div className="chat-dialog-component">
       <h2>Room {roomNumber}</h2>
       <div className="messages">
-        {messages.map((message, index) => (
+        {roomMessages[roomNumber]?.map((message, index) => (
           <div key={index} className="message">
             {message}
           </div>
